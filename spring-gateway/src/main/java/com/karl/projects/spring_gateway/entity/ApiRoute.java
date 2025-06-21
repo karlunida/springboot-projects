@@ -35,6 +35,8 @@ public class ApiRoute {
 	private List<String> methods;
 	@Column(name = "active")
 	private Boolean active;
+	@Column(name = "contextRoot")
+	private String contextRoot;
 	
 
 }
