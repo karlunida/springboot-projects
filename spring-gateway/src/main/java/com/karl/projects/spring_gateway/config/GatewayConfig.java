@@ -1,5 +1,6 @@
 package com.karl.projects.spring_gateway.config;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -14,5 +15,10 @@ public class GatewayConfig {
 	public RouteLocator myRoutes(RouteLocatorBuilder builder) {
 		return new CustomRouteLocator(builder);
 	}
+	
+	@Bean
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
+    }
 
 }

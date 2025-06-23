@@ -1,4 +1,4 @@
-package com.karl.projects.spring_gateway.config;
+package com.karl.projects.spring_gateway.mapper;
 
 import java.util.Arrays;
 import java.util.List;
