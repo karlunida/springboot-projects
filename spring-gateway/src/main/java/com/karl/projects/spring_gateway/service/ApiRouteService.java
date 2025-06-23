@@ -8,11 +8,13 @@ import com.karl.projects.spring_gateway.entity.ApiRoute;
 import com.karl.projects.spring_gateway.mapper.ApiRouteMapper;
 import com.karl.projects.spring_gateway.repository.ApiRouteRepository;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Service
+@Slf4j
 public class ApiRouteService {
 	
 	@Autowired
@@ -23,6 +25,9 @@ public class ApiRouteService {
 	
 	@Autowired
 	private RouteRefreshService routeRefreshService;
+	
+	@Autowired
+	private BeanRefreshService beanRefreshService;
 	
 	public Flux<ApiRoute> findAll(){
 		return Mono.fromCallable(() -> apiRouteRepository.findAll()).subscribeOn(Schedulers.boundedElastic()).flatMapMany(Flux::fromIterable);
@@ -49,7 +54,10 @@ public class ApiRouteService {
 			apiRoute.setActive(true);
 			return Mono.just(apiRouteRepository.save(apiRoute));
 		}))
-		.doOnSuccess(t -> routeRefreshService.refreshRoutes())
+		.doOnSuccess(t -> {
+			routeRefreshService.refreshRoutes();
+			beanRefreshService.refreshBean();
+		})
 		.subscribeOn(Schedulers.boundedElastic());
 
 	}
@@ -59,7 +67,10 @@ public class ApiRouteService {
 			existingRoute = apiRouteMapper.toEntity(apiRouteDto);
 			return Mono.just(apiRouteRepository.save(existingRoute));
 		}).switchIfEmpty(Mono.error(new IllegalStateException("Route does not exists")))
-		.doOnSuccess(t -> routeRefreshService.refreshRoutes())
+		.doOnSuccess(t -> {
+			routeRefreshService.refreshRoutes();
+			beanRefreshService.refreshBean();
+		})
 		.subscribeOn(Schedulers.boundedElastic());
 	}
 

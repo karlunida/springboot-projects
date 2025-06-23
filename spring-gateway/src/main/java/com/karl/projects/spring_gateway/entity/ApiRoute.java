@@ -5,8 +5,6 @@ import java.util.List;
 import org.springframework.data.domain.Persistable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.karl.projects.spring_gateway.mapper.StringListConverter;
 
 import jakarta.annotation.Nullable;

@@ -12,6 +12,7 @@ import com.karl.projects.spring_gateway.dto.ApiRouteDTO;
 import com.karl.projects.spring_gateway.entity.ApiRoute;
 import com.karl.projects.spring_gateway.repository.ApiRouteRepository;
 import com.karl.projects.spring_gateway.service.ApiRouteService;
+import com.karl.projects.spring_gateway.service.BeanRefreshService;
 import com.karl.projects.spring_gateway.service.RouteRefreshService;
 
 import reactor.test.StepVerifier;
@@ -27,6 +28,9 @@ class SpringGatewayApplicationTests {
 	
 	@Autowired
 	private RouteRefreshService routeRefreshService;
+	
+	@Autowired
+	private BeanRefreshService beanRefreshService;
 	
 	@Test
 	void contextLoads() {
@@ -48,6 +52,11 @@ class SpringGatewayApplicationTests {
 	
 	@Test
 	void routeRefreshTest() {
+	}
+	
+	@Test
+	void beanRefreshTest() {
+		beanRefreshService.refreshBean();
 	}
 
 }

@@ -59,7 +59,9 @@ public class GatewayController {
 	
 	@GetMapping("/refresh")
 	public Mono<ResponseEntity<Void>> refreshRoutes(){
-		return Mono.fromRunnable(() -> routeRefreshService.refreshRoutes()).map( t -> ResponseEntity.status(HttpStatus.NO_CONTENT).build() );
+		return Mono.fromRunnable(() -> {
+			routeRefreshService.refreshRoutes();
+		}).map( t -> ResponseEntity.status(HttpStatus.NO_CONTENT).build() );
 	}
 	
 }
