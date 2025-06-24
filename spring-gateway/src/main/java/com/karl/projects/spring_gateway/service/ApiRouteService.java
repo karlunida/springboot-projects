@@ -8,6 +8,7 @@ import com.karl.projects.spring_gateway.entity.ApiRoute;
 import com.karl.projects.spring_gateway.mapper.ApiRouteMapper;
 import com.karl.projects.spring_gateway.repository.ApiRouteRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -30,11 +31,11 @@ public class ApiRouteService {
 	private BeanRefreshService beanRefreshService;
 	
 	public Flux<ApiRoute> findAll(){
-		return Mono.fromCallable(() -> apiRouteRepository.findAll()).subscribeOn(Schedulers.boundedElastic()).flatMapMany(Flux::fromIterable);
+		return Flux.defer(() -> Flux.fromIterable(apiRouteRepository.findAll())).subscribeOn(Schedulers.boundedElastic());
 	}
 	
 	public Flux<ApiRoute> findAllActive(){
-		return Mono.fromCallable(() -> apiRouteRepository.findIsActive()).subscribeOn(Schedulers.boundedElastic()).flatMapMany(Flux::fromIterable);
+		return Flux.defer(() -> Flux.fromIterable(apiRouteRepository.findIsActive())).subscribeOn(Schedulers.boundedElastic());
 	}
 	
 	public Mono<ApiRoute> findRoute(String routeName){
@@ -52,26 +53,44 @@ public class ApiRouteService {
 			ApiRoute apiRoute = apiRouteMapper.toEntity(apiRouteDto);
 			apiRoute.setNewRoute(true);
 			apiRoute.setActive(true);
-			return Mono.just(apiRouteRepository.save(apiRoute));
+			return Mono.fromCallable(() -> apiRouteRepository.save(apiRoute));
 		}))
+		.subscribeOn(Schedulers.boundedElastic())
 		.doOnSuccess(t -> {
 			routeRefreshService.refreshRoutes();
 			beanRefreshService.refreshBean();
 		})
-		.subscribeOn(Schedulers.boundedElastic());
+		.then();
+		
 
 	}
 	
-	public Mono<?> updateApiRoute(ApiRouteDTO apiRouteDto){
-		return findAndValidateRoute(apiRouteDto.getRouteName()).flatMap(existingRoute -> {
-			existingRoute = apiRouteMapper.toEntity(apiRouteDto);
-			return Mono.just(apiRouteRepository.save(existingRoute));
-		}).switchIfEmpty(Mono.error(new IllegalStateException("Route does not exists")))
-		.doOnSuccess(t -> {
-			routeRefreshService.refreshRoutes();
-			beanRefreshService.refreshBean();
-		})
-		.subscribeOn(Schedulers.boundedElastic());
+	public Mono<?> updateApiRoute(ApiRouteDTO apiRouteDto) {
+		return findAndValidateRoute(apiRouteDto.getRouteName())
+			.switchIfEmpty(Mono.error(new IllegalStateException("Route does not exist")))
+			.flatMap(existingRoute -> {
+				apiRouteMapper.toEntity(apiRouteDto, existingRoute);
+				return Mono.fromCallable(() -> apiRouteRepository.save(existingRoute));
+			})
+			.subscribeOn(Schedulers.boundedElastic())
+			.doOnSuccess(route -> {
+				routeRefreshService.refreshRoutes();
+				beanRefreshService.refreshBean();
+			})
+			.then();
+	}
+
+	
+	@Transactional
+	public Mono<?> deleteApiRoute(String routeName){
+		return findAndValidateRoute(routeName)
+				.switchIfEmpty(Mono.error(new IllegalStateException("Route does not exist")))
+				.flatMap(existingRoute -> Mono.fromRunnable(() -> {
+					apiRouteRepository.delete(existingRoute);
+				}).subscribeOn(Schedulers.boundedElastic())).doOnSuccess(route -> {
+					routeRefreshService.refreshRoutes();
+					beanRefreshService.refreshBean();
+				}).then();
 	}
 
 }
